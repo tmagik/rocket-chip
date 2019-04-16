@@ -9,7 +9,7 @@ import freechips.rocketchip.subsystem.BaseSubsystem
 import freechips.rocketchip.tilelink._
 import freechips.rocketchip.util._
 
-case class MaskROMParams(address: BigInt, name: String, depth: Int = 2048, width: Int = 32)
+case class MaskROMParams(address: BigInt, name: String, depth: Int = 524288, width: Int = 32)
 
 case object PeripheryMaskROMKey extends Field[Seq[MaskROMParams]]
 
