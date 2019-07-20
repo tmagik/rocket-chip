@@ -52,23 +52,24 @@ class BPWatch (val n: Int) extends Bundle() {
   val valid = Vec(n, Bool())
   val dvalid = Vec(n, Bool())
   val ivalid = Vec(n, Bool())
-  val action = UInt(3.W)
+  val action = UInt(width = 3.W)
 }
 
 class BreakpointUnit(n: Int)(implicit val p: Parameters) extends Module with HasCoreParameters {
   val io = IO(new Bundle {
-    val status = Input(new MStatus())
-    val bp = Input(Vec(n, new BP))
-    val pc = Input(UInt(vaddrBits.W))
-    val ea = Input(UInt(vaddrBits.W))
-    val xcpt_if  = Output(Bool())
-    val xcpt_ld  = Output(Bool())
-    val xcpt_st  = Output(Bool())
-    val debug_if = Output(Bool())
-    val debug_ld = Output(Bool())
-    val debug_st = Output(Bool())
-    val bpwatch  = Output(Vec(n, new BPWatch(1)))
+   val status = Input(new MStatus())
+   val bp = Input(Vec(n, new BP))
+   val pc = Input(UInt(vaddrBits.W))
+   val ea = Input(UInt(vaddrBits.W))
+   val xcpt_if  = Output(Bool())
+   val xcpt_ld  = Output(Bool())
+   val xcpt_st  = Output(Bool())
+   val debug_if = Output(Bool())
+   val debug_ld = Output(Bool())
+   val debug_st = Output(Bool())
+   val bpwatch  = Output(Vec(n, new BPWatch(1)))
   })
+
 
   io.xcpt_if := false
   io.xcpt_ld := false
@@ -86,11 +87,13 @@ class BreakpointUnit(n: Int)(implicit val p: Parameters) extends Module with Has
     val action = bp.control.action
 
     bpw.action := action
-    bpw.valid := false.B
+    bpw.valid(0) := false.B
+    bpw.dvalid(0) := false.B
+    bpw.ivalid(0) := false.B
 
-    when (end && r && ri) { io.xcpt_ld := (action === 0.U); io.debug_ld := (action === 1.U); bpw.valid := true.B }
-    when (end && w && wi) { io.xcpt_st := (action === 0.U); io.debug_st := (action === 1.U); bpw.valid := true.B }
-    when (end && x && xi) { io.xcpt_if := (action === 0.U); io.debug_if := (action === 1.U); bpw.valid := true.B }
+    when (end && r && ri) { io.xcpt_ld := (action === 0.U); io.debug_ld := (action === 1.U); bpw.valid(0) := true.B; bpw.dvalid(0) := true.B }
+    when (end && w && wi) { io.xcpt_st := (action === 0.U); io.debug_st := (action === 1.U); bpw.valid(0) := true.B; bpw.dvalid(0) := true.B }
+    when (end && x && xi) { io.xcpt_if := (action === 0.U); io.debug_if := (action === 1.U); bpw.valid(0) := true.B; bpw.ivalid(0) := true.B }
 
     (end || r, end || w, end || x)
   }
