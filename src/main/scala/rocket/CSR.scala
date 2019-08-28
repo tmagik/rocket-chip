@@ -17,6 +17,7 @@ class MStatus extends Bundle {
   // not truly part of mstatus, but convenient
   val debug = Bool()
   val cease = Bool()
+  val wfi = Bool()
   val isa = UInt(width = 32)
 
   val dprv = UInt(width = PRV.SZ) // effective privilege for data accesses
@@ -26,8 +27,7 @@ class MStatus extends Bundle {
   val sxl = UInt(width = 2)
   val uxl = UInt(width = 2)
   val sd_rv32 = Bool()
-  val zero1 = UInt(width = 6)
-  val vs = UInt(width = 2)
+  val zero1 = UInt(width = 8)
   val tsr = Bool()
   val tw = Bool()
   val tvm = Bool()
@@ -37,7 +37,7 @@ class MStatus extends Bundle {
   val xs = UInt(width = 2)
   val fs = UInt(width = 2)
   val mpp = UInt(width = 2)
-  val hpp = UInt(width = 2)
+  val vs = UInt(width = 2)
   val spp = UInt(width = 1)
   val mpie = Bool()
   val hpie = Bool()
@@ -162,21 +162,18 @@ class PerfCounterIO(implicit p: Parameters) extends CoreBundle
 }
 
 class TracedInstruction(implicit p: Parameters) extends CoreBundle with Clocked {
-  val iaddrw = coreMaxAddrBits
-  val insnw = iLen
-  val privw = 3
-  val causew = log2Ceil(1 + CSR.busErrorIntCause)
-  val tvalw = coreMaxAddrBits max iLen
   val valid = Bool()
-  val iaddr = UInt(width = iaddrw)
-  val insn = UInt(width = insnw)
-  val priv = UInt(width = privw)
+  val iaddr = UInt(width = coreMaxAddrBits)
+  val insn = UInt(width = iLen)
+  val priv = UInt(width = 3)
   val exception = Bool()
   val interrupt = Bool()
-  val cause = UInt(width = causew)
-  val tval = UInt(width = tvalw)
-  //printf("validw 1 iaddrw %d insnw %d privw %d excpw 1 intw 1 causw %d tvalw %d",
-  //	iaddrw, insnw, privw, causew, tvalw)
+  val cause = UInt(width = log2Ceil(1 + CSR.busErrorIntCause))
+  val tval = UInt(width = coreMaxAddrBits max iLen)
+}
+
+class TraceAux extends Bundle {
+  val stall = Bool()
 }
 
 class CSRDecodeIO extends Bundle {
@@ -617,6 +614,7 @@ class CSRFile(
     io_dec.system_illegal := reg_mstatus.prv < io_dec.csr(9,8) ||
       is_wfi && !allow_wfi ||
       is_ret && !allow_sret ||
+      is_ret && io_dec.csr(10) && !reg_debug ||
       is_sfence && !allow_sfence_vma
   }
 
@@ -744,6 +742,7 @@ class CSRFile(
   io.time := reg_cycle
   io.csr_stall := reg_wfi || io.status.cease
   io.status.cease := RegEnable(true.B, false.B, insn_cease)
+  io.status.wfi := reg_wfi
 
   for ((io, reg) <- io.customCSRs zip reg_custom) {
     io.wen := false
@@ -1018,7 +1017,7 @@ class CSRFile(
   }
 
   for (((t, insn), i) <- (io.trace zip io.inst).zipWithIndex) {
-    t.clock := clock
+    t.clock := io.ungated_clock
     t.reset := reset
     t.exception := io.retire >= i && exception
     t.valid := io.retire > i || t.exception
