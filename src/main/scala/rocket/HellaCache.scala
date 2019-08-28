@@ -103,6 +103,7 @@ trait HasCoreMemOp extends HasCoreParameters {
 
 trait HasCoreData extends HasCoreParameters {
   val data = Bits(width = coreDataBits)
+  val mask = UInt(width = coreDataBytes)
 }
 
 class HellaCacheReqInternal(implicit p: Parameters) extends CoreBundle()(p) with HasCoreMemOp {
@@ -134,10 +135,7 @@ class HellaCacheExceptions extends Bundle {
   val ae = new AlignmentExceptions
 }
 
-class HellaCacheWriteData(implicit p: Parameters) extends CoreBundle()(p) {
-  val data = UInt(width = coreDataBits)
-  val mask = UInt(width = coreDataBytes)
-}
+class HellaCacheWriteData(implicit p: Parameters) extends CoreBundle()(p) with HasCoreData
 
 class HellaCachePerfEvents extends Bundle {
   val acquire = Bool()
