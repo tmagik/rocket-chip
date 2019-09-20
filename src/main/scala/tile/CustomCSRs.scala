@@ -24,7 +24,8 @@ class CustomCSRs(implicit p: Parameters) extends CoreBundle {
   protected def bpmCSRId = 0x7c0
   protected def bpmCSR: Option[CustomCSR] = None
 
-  protected def chickenCSRId = 0x7c1
+  //protected def chickenCSRId = 0x7c1
+  protected def chickenCSRId = 0x4c1		// Userspace chicken bits
   protected def chickenCSR: Option[CustomCSR] = None
 
   // If you override this, you'll want to concatenate super.decls

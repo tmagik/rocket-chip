@@ -91,6 +91,7 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
   require(eccBytes == 1 || !dECC.isInstanceOf[IdentityCode])
   val usingRMW = eccBytes > 1 || usingAtomicsInCache
   val mmioOffset = outer.firstMMIO
+  edge.manager.requireFifo(TLFIFOFixer.allVolatile)  // TileLink pipelining MMIO requests
 
   val clock_en_reg = Reg(Bool())
   io.cpu.clock_enabled := clock_en_reg
@@ -201,7 +202,7 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
 
   // address translation
   val tlb = Module(new TLB(false, log2Ceil(coreDataBytes), TLBConfig(nTLBEntries)))
-  val s1_cmd_uses_tlb = s1_readwrite || s1_flush_line
+  val s1_cmd_uses_tlb = s1_readwrite || s1_flush_line || s1_req.cmd === M_WOK
   io.ptw <> tlb.io.ptw
   tlb.io.kill := io.cpu.s2_kill
   tlb.io.req.valid := s1_valid && !io.cpu.s1_kill && s1_cmd_uses_tlb
@@ -336,8 +337,11 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
   dontTouch(s2_victim_dirty)
   val s2_update_meta = s2_hit_state =/= s2_new_hit_state
   val s2_dont_nack_uncached = s2_valid_uncached_pending && tl_out_a.ready
-  val s2_dont_nack_flush = supports_flush && !s2_meta_error && (s2_cmd_flush_all && flushed && !flushing || s2_cmd_flush_line && !s2_hit)
-  io.cpu.s2_nack := s2_valid_no_xcpt && !s2_dont_nack_uncached && !s2_dont_nack_flush && !s2_valid_hit
+  val s2_dont_nack_misc = s2_valid_masked && !s2_meta_error &&
+    (supports_flush && s2_cmd_flush_all && flushed && !flushing ||
+     supports_flush && s2_cmd_flush_line && !s2_hit ||
+     s2_req.cmd === M_WOK)
+  io.cpu.s2_nack := s2_valid_no_xcpt && !s2_dont_nack_uncached && !s2_dont_nack_misc && !s2_valid_hit
   when (io.cpu.s2_nack || (s2_valid_hit_pre_data_ecc_and_waw && s2_update_meta)) { s1_nack := true }
 
   // tag updates on ECC errors
