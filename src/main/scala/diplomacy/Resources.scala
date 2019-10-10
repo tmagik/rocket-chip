@@ -444,7 +444,11 @@ object ResourceAnchors
       val width = resources("width").map(_.value)
       Description("cpus", Map(
         "#address-cells" -> width,
-        "#size-cells"    -> Seq(ResourceInt(0))))
+        "#size-cells"    -> Seq(ResourceInt(0)),
+        //"timebase-frequency" -> Seq((scala.math.BigInt(DTSTimebase)))
+        //"timebase-frequency" -> Seq(ResourceInt(BigInt(DTSTimebase)))
+        //"timebase-frequency" -> Seq(ResourceInt(BigInt(DTSTimebase)))
+      )),
     }
   }
 
