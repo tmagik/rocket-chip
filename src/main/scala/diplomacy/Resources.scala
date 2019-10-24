@@ -5,6 +5,7 @@ package freechips.rocketchip.diplomacy
 import Chisel.log2Ceil
 import freechips.rocketchip.diplomaticobjectmodel.DiplomaticObjectModelAddressing
 import freechips.rocketchip.diplomaticobjectmodel.model._
+import freechips.rocketchip.config.Parameters
 
 import scala.collection.immutable.{ListMap, SortedMap}
 import scala.collection.mutable.HashMap
@@ -439,15 +440,13 @@ object ResourceAnchors
     }
   }
 
-  val cpus = new Device {
+  def cpus(implicit p: Parameters) = new Device {
     def describe(resources: ResourceBindings): Description = {
       val width = resources("width").map(_.value)
       Description("cpus", Map(
         "#address-cells" -> width,
         "#size-cells"    -> Seq(ResourceInt(0)),
-        //"timebase-frequency" -> Seq((scala.math.BigInt(DTSTimebase)))
-        //"timebase-frequency" -> Seq(ResourceInt(BigInt(DTSTimebase)))
-        //"timebase-frequency" -> Seq(ResourceInt(BigInt(DTSTimebase)))
+        "timebase-frequency" -> p(DTSTimebase).asProperty	// see LIN-109
       )),
     }
   }
