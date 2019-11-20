@@ -257,8 +257,8 @@ object VType {
 
   def fromUInt(that: UInt)(implicit p: Parameters): VType = fromUInt(that, false)
 
-  def computeVL(avl: UInt, vtype: UInt, useMax: Bool)(implicit p: Parameters): UInt =
-    VType.fromUInt(vtype, true).vl(avl, useMax)
+  def computeVL(avl: UInt, vtype: UInt, currentVL: UInt, useCurrentVL: Bool, useMax: Bool, useZero: Bool)(implicit p: Parameters): UInt =
+    VType.fromUInt(vtype, true).vl(avl, currentVL, useCurrentVL, useMax, useZero)
 }
 
 class VType(implicit p: Parameters) extends CoreBundle {
@@ -272,9 +272,9 @@ class VType(implicit p: Parameters) extends CoreBundle {
   def vlMax: UInt = maxVLMax >> (this.vsew +& ~this.vlmul)
   def vlMaxInBytes: UInt = maxVLMax >> ~this.vlmul
 
-  def vl(x: UInt, useMax: Bool): UInt = {
-    val atLeastMaxVLMax = useMax || x >= maxVLMax
-    val x_lsbs = x(maxVLMax.log2 - 1, 0)
+  def vl(avl: UInt, currentVL: UInt, useCurrentVL: Bool, useMax: Bool, useZero: Bool): UInt = {
+    val atLeastMaxVLMax = useMax || Mux(useCurrentVL, currentVL >= maxVLMax, avl >= maxVLMax)
+    val avl_lsbs = Mux(useCurrentVL, currentVL, avl)(maxVLMax.log2 - 1, 0)
 
     val atLeastVLMax = atLeastMaxVLMax || (x_lsbs & (-maxVLMax.S >> (this.vsew +& ~this.vlmul)).asUInt).orR
     Mux(vill, 0.U, Mux(atLeastVLMax, vlMax, x_lsbs))
