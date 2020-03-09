@@ -86,10 +86,9 @@ trait HasCoreParameters extends HasTileParameters {
   val mtvecInit = coreParams.mtvecInit
   val mtvecWritable = coreParams.mtvecWritable
 
-  /* Backport merge problem, removing for now -- Troy 
+  /* FIXME: remove this to match master? */
   val coreDCacheReqTagBits = 6
   val dcacheReqTagBits = coreDCacheReqTagBits + log2Ceil(dcacheArbPorts)
-  */
 
   def vLen = coreParams.vLen
   def eLen = coreParams.eLen(xLen, fLen)
