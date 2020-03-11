@@ -161,14 +161,21 @@ class PerfCounterIO(implicit p: Parameters) extends CoreBundle
 }
 
 class TracedInstruction(implicit p: Parameters) extends CoreBundle with Clocked {
+  val iaddrw = coreMaxAddrBits
+  val insnw = iLen
+  val privw = 3
+  val causew = log2Ceil(1 + CSR.busErrorIntCause)
+  val tvalw = coreMaxAddrBits max iLen
   val valid = Bool()
-  val iaddr = UInt(width = coreMaxAddrBits)
-  val insn = UInt(width = iLen)
-  val priv = UInt(width = 3)
+  val iaddr = UInt(width = iaddrw)
+  val insn = UInt(width = insnw)
+  val priv = UInt(width = privw)
   val exception = Bool()
   val interrupt = Bool()
-  val cause = UInt(width = log2Ceil(1 + CSR.busErrorIntCause))
-  val tval = UInt(width = coreMaxAddrBits max iLen)
+  val cause = UInt(width = causew)
+  val tval = UInt(width = tvalw)
+  //printf("validw 1 iaddrw %d insnw %d privw %d excpw 1 intw 1 causw %d tvalw %d",
+  //	iaddrw, insnw, privw, causew, tvalw)
 }
 
 class CSRDecodeIO extends Bundle {

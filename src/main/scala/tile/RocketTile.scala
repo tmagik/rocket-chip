@@ -89,6 +89,8 @@ class RocketTile private(
       val Description(name, mapping) = super.describe(resources)
       Description(name, mapping ++ cpuProperties ++ nextLevelCacheProperty ++ tileProperties ++ dtimProperty ++ itimProperty)
     }
+    println(s"cpu -> parent ${parent}")
+    println(s"cpu -> cpuProperties ${cpuProperties}")
   }
 
   ResourceBinding {
